@@ -11,8 +11,9 @@ class ReservationResource extends JsonResource
      */
     public function toArray($request): array
     {
-        return [
+        $data = [
             'id' => $this->id,
+            'resource_id' => $this->resource_id,
             'reservation_number' => $this->reservation_number,
             'units' => $this->units,
             'start_time' => $this->start_time?->toIso8601String(),
@@ -23,5 +24,6 @@ class ReservationResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
+        return $data;
     }
 }

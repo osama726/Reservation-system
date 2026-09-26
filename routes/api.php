@@ -21,5 +21,7 @@ Route::middleware('idempotent')->group(function () {
     Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel']);
     Route::put('/reservations/{reservation}', [ReservationController::class, 'update']);
 
-    Route::patch('/resources/{resource}/capacity', [ResourceController::class, 'updateCapacity']);
+    // Admin-only routes
+    Route::put('/resources/{resource}/capacity', [ResourceController::class, 'updateCapacity'])
+        ->middleware('admin.token');
 });

@@ -17,7 +17,7 @@ class ReservationFactory extends Factory
 
         return [
             'resource_id' => Resource::factory(),
-            'reservation_number' => $this->faker->unique()->numberBetween(100000, 99999999),
+            'reservation_number' => $this->faker->unique()->numberBetween(10000, 9999999),
             'units' => 1,
             'start_time' => $start,
             'end_time' => (clone $start)->addHour(),

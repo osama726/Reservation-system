@@ -36,8 +36,8 @@ class CreateReservationAction
                 'start_time' => $data->startTime,
                 'end_time' => $data->endTime,
                 'status' => ReservationStatus::Pending,
-                'expires_at' => now()->addMinutes(2),
-                'reservation_number' => (string) Str::uuid(),
+                'expires_at' => now()->addMinutes(30),
+                'reservation_number' => random_int(100000, 99999999),
             ];
 
             if ($data->id !== null) {
