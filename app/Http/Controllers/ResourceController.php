@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Resource\UpdateCapacityAction;
 use App\Http\Requests\UpdateCapacityRequest;
-use App\Http\Resources\ResourceResource;
+use Illuminate\Http\JsonResponse;
 
 class ResourceController extends Controller
 {
@@ -12,9 +12,14 @@ class ResourceController extends Controller
         UpdateCapacityRequest $request,
         int $resource,
         UpdateCapacityAction $action,
-    ): ResourceResource {
+    ): JsonResponse {
         $result = $action($resource, (int) $request->input('capacity'));
 
-        return ResourceResource::make($result);
+        return response()->json([
+            'id' => $result->id,
+            'name' => $result->name,
+            'capacity' => $result->capacity,
+        ]);
+
     }
 }

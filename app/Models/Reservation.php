@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+    use Illuminate\Support\Str;
 
 class Reservation extends Model
 {
@@ -58,5 +59,14 @@ class Reservation extends Model
             || ($this->status === ReservationStatus::Pending
                 && $this->expires_at !== null
                 && $this->expires_at->isFuture());
+    }
+
+    protected static function booted()
+    {
+        static::creating(function ($reservation) {
+            if (empty($reservation->reservation_number)) {
+                $reservation->reservation_number = random_int(100000, 99999999);
+            }
+        });
     }
 }

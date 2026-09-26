@@ -2,24 +2,21 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Resources\JsonApi\JsonApiResource;
+use Illuminate\Http\Resources\Json\JsonResource;
 
-class ResourceResource extends JsonApiResource
+class ResourceResource extends JsonResource
 {
     /**
-     * The resource's attributes.
+     * Transform the resource into an array.
      */
-    public $attributes = [
-        'name',
-        'capacity',
-        'created_at',
-        'updated_at',
-    ];
-
-    /**
-     * The resource's relationships.
-     */
-    public $relationships = [
-        'reservations',
-    ];
+    public function toArray($request): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'capacity' => $this->capacity,
+            'created_at' => $this->created_at?->toIso8601String(),
+            'updated_at' => $this->updated_at?->toIso8601String(),
+        ];
+    }
 }

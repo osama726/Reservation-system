@@ -19,37 +19,36 @@ use Illuminate\Http\JsonResponse;
 
 class ReservationController extends Controller
 {
-    public function store(CreateReservationRequest $request, CreateReservationAction $action): ReservationResource
+    public function store(CreateReservationRequest $request, CreateReservationAction $action): JsonResponse
     {
         $reservation = $action(CreateReservationData::fromRequest($request));
 
-        return ReservationResource::make($reservation);
+        return (new ReservationResource($reservation))
+            ->response()
+            ->setStatusCode(201);
     }
 
-    public function confirm(string $reservation, ConfirmReservationAction $action): ReservationResource
+    public function confirm(string $reservation, ConfirmReservationAction $action): JsonResponse
     {
         $result = $action($reservation);
 
-        return ReservationResource::make($result);
+        return (new ReservationResource($result))->response();
     }
 
-    public function cancel(string $reservation, CancelReservationAction $action): ReservationResource
+    public function cancel(string $reservation, CancelReservationAction $action): JsonResponse
     {
         $result = $action($reservation);
 
-        return ReservationResource::make($result);
+        return (new ReservationResource($result))->response();
     }
 
-    public function update(UpdateReservationRequest $request, string $reservation, UpdateReservationAction $action): ReservationResource
+    public function update(UpdateReservationRequest $request, string $reservation, UpdateReservationAction $action): JsonResponse
     {
         $result = $action($reservation, UpdateReservationData::fromRequest($request));
 
-        return ReservationResource::make($result);
+        return (new ReservationResource($result))->response();
     }
 
-    /**
-     * Check the availability of a resource for a given time range.
-     */
     public function availability(
         CheckAvailabilityRequest $request,
         Resource $resource,
@@ -61,12 +60,12 @@ class ReservationController extends Controller
         $booked = $availability->getBookedUnits($resource->id, $start, $end);
 
         return response()->json([
-            'resource_id'       => $resource->id,
-            'capacity'          => $resource->capacity,
-            'booked_units'      => $booked,
-            'available_units'   => max(0, $resource->capacity - $booked),
-            'start_time'        => $start->toIso8601String(),
-            'end_time'          => $end->toIso8601String(),
+            'resource_id' => $resource->id,
+            'capacity' => $resource->capacity,
+            'booked_units' => $booked,
+            'available_units' => max(0, $resource->capacity - $booked),
+            'start_time' => $start->toIso8601String(),
+            'end_time' => $end->toIso8601String(),
         ]);
     }
 }

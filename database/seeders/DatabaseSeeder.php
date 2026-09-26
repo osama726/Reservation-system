@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Reservation;
+use App\Models\Resource;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -21,5 +23,21 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        Resource::factory()->count(3)->create()->each(function ($resource) {
+
+            Reservation::factory()->count(2)->create([
+                'resource_id' => $resource->id,
+            ]);
+
+            Reservation::factory()->confirmed()->count(2)->create([
+                'resource_id' => $resource->id,
+            ]);
+
+            Reservation::factory()->cancelled()->create([
+                'resource_id' => $resource->id,
+            ]);
+        });
+
     }
 }

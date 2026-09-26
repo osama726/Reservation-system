@@ -9,6 +9,7 @@ use App\Models\Resource;
 use App\Models\Reservation;
 use App\Services\AvailabilityService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class CreateReservationAction
 {
@@ -36,6 +37,7 @@ class CreateReservationAction
                 'end_time' => $data->endTime,
                 'status' => ReservationStatus::Pending,
                 'expires_at' => now()->addMinutes(2),
+                'reservation_number' => (string) Str::uuid(),
             ];
 
             if ($data->id !== null) {
