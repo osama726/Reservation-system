@@ -70,16 +70,252 @@ Schedule::command('reservations:expire')->everyMinute();
 
 ## API Endpoints
 
-All write endpoints require an `Idempotency-Key` header.
+### Postman collection
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/reservations` | Create a reservation |
-| POST | `/api/reservations/{reservation}/confirm` | Confirm a pending reservation |
-| POST | `/api/reservations/{reservation}/cancel` | Cancel a reservation |
-| PUT | `/api/reservations/{reservation}` | Update units / time window |
-| GET | `/api/resources/{resource}/availability` | Check availability for a period |
-| PATCH | `/api/resources/{resource}/capacity` | Update a resource's capacity (admin only) |
+For a ready-to-use API collection with sample requests and responses, use the Postman workspace here:
+
+https://app.getpostman.com/join-team?invite_code=69ed1fee6d60d55a8deca8c49a16a211b25debb9a54feca7bfb62b5bda74b2e9&target_code=bce7e483dc15a1672c27f0ed944d11e6
+
+### Common conventions
+
+- All write requests require an `Idempotency-Key` header.
+- All timestamps are ISO 8601 strings.
+- `resource_id` is the numeric ID of the resource.
+- `units` is the number of units being booked for that time window.
+- If a request violates capacity, the API returns a `409 Conflict` with an error payload.
+- Successful reservation responses are returned in the same flat JSON structure as the app's resource serializer.
+
+### Response shape
+
+Successful reservation responses look like this:
+
+```json
+{
+    "data": {
+        "id": "8d4a0f9d-0d5e-4d69-b43a-9f96a454e2c1",
+        "resource_id": 1,
+        "reservation_number": 48243501,
+        "units": 2,
+        "status": "pending",
+        "start_time": "2030-01-01T10:00:00.000000Z",
+        "end_time": "2030-01-01T11:00:00.000000Z",
+        "expires_at": "2030-01-01T10:30:00.000000Z",
+        "created_at": "2030-01-01T09:59:00.000000Z",
+        "updated_at": "2030-01-01T09:59:00.000000Z"
+    }
+}
+```
+
+Error responses look like this:
+
+```json
+{
+    "error": "capacity_exceeded",
+    "message": "The requested reservation would exceed the resource capacity."
+}
+```
+
+### Endpoint details
+
+| Method | Endpoint                                  | Description                                    | Body / Parameters                                                               |
+| ------ | ----------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------- |
+| POST   | `/api/reservations`                       | Create a reservation                           | `resource_id`, `units`, `start_time`, `end_time`, plus `Idempotency-Key` header |
+| POST   | `/api/reservations/{reservation}/confirm` | Confirm a pending reservation                  | No body required; `Idempotency-Key` header required                             |
+| POST   | `/api/reservations/{reservation}/cancel`  | Cancel a reservation                           | No body required; `Idempotency-Key` header required                             |
+| PUT    | `/api/reservations/{reservation}`         | Update a reservation                           | Optional: `units`, `start_time`, `end_time`; `Idempotency-Key` header required  |
+| GET    | `/api/resources/{resource}/availability`  | Check total booked units vs available capacity | Query params: `start_time`, `end_time`                                          |
+| PATCH  | `/api/resources/{resource}/capacity`      | Update a resource's capacity (admin only)      | JSON body: `capacity` and `X-Admin-Token` header                                |
+| GET    | `/api/reservations/{reservation}/history` | View a reservation's full audit trail          | No body required                                                                |
+
+#### 1) Create a reservation
+
+`POST /api/reservations`
+
+Headers:
+
+```http
+Idempotency-Key: create-res-001
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+    "resource_id": 1,
+    "units": 2,
+    "start_time": "2030-01-01T10:00:00Z",
+    "end_time": "2030-01-01T11:00:00Z"
+}
+```
+
+Expected result:
+
+```json
+{
+    "data": {
+        "id": "...",
+        "resource_id": 1,
+        "units": 2,
+        "status": "pending",
+        "start_time": "2030-01-01T10:00:00.000000Z",
+        "end_time": "2030-01-01T11:00:00.000000Z"
+    }
+}
+```
+
+If the booking would exceed capacity, the request returns `409` with:
+
+```json
+{
+    "error": "capacity_exceeded"
+}
+```
+
+#### 2) Confirm a reservation
+
+`POST /api/reservations/{reservation}/confirm`
+
+Headers:
+
+```http
+Idempotency-Key: confirm-res-001
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{}
+```
+
+Expected result: the same reservation object, but with `status` set to `confirmed`.
+
+#### 3) Cancel a reservation
+
+`POST /api/reservations/{reservation}/cancel`
+
+Headers:
+
+```http
+Idempotency-Key: cancel-res-001
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{}
+```
+
+Expected result: the reservation status becomes `cancelled`.
+
+#### 4) Update a reservation
+
+`PUT /api/reservations/{reservation}`
+
+Headers:
+
+```http
+Idempotency-Key: update-res-001
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+    "units": 3,
+    "start_time": "2030-01-01T10:15:00Z",
+    "end_time": "2030-01-01T12:00:00Z"
+}
+```
+
+The update re-checks capacity against overlapping bookings and rejects the change if it would overbook the resource.
+
+#### 5) Check availability
+
+`GET /api/resources/{resource}/availability?start_time=...&end_time=...`
+
+Example:
+
+```http
+GET /api/resources/1/availability?start_time=2030-01-01T10:00:00Z&end_time=2030-01-01T11:00:00Z
+```
+
+Example response:
+
+```json
+{
+    "resource_id": 1,
+    "capacity": 10,
+    "booked_units": 7,
+    "available_units": 3,
+    "start_time": "2030-01-01T10:00:00.000000Z",
+    "end_time": "2030-01-01T11:00:00.000000Z"
+}
+```
+
+#### 6) Update resource capacity (admin only)
+
+`PATCH /api/resources/{resource}/capacity`
+
+Headers:
+
+```http
+X-Admin-Token: your-admin-secret
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+    "capacity": 12
+}
+```
+
+This endpoint is protected by the admin token middleware and is the only endpoint without public access.
+
+#### 7) View reservation history
+
+`GET /api/reservations/{reservation}/history`
+
+Example response:
+
+```json
+{
+    "data": [
+        {
+            "id": "...",
+            "reservation_id": "...",
+            "action": "created",
+            "old_data": null,
+            "new_data": {
+                "id": "...",
+                "resource_id": 1,
+                "units": 2,
+                "status": "pending",
+                "start_time": "2030-01-01T10:00:00.000000Z",
+                "end_time": "2030-01-01T11:00:00.000000Z"
+            },
+            "created_at": "2030-01-01T09:59:00.000000Z"
+        },
+        {
+            "id": "...",
+            "reservation_id": "...",
+            "action": "confirmed",
+            "old_data": {
+                "status": "pending"
+            },
+            "new_data": {
+                "status": "confirmed"
+            },
+            "created_at": "2030-01-01T10:05:00.000000Z"
+        }
+    ]
+}
+```
 
 ---
 
@@ -87,7 +323,7 @@ All write endpoints require an `Idempotency-Key` header.
 
 ### 1. Reservation expiry without a background worker
 
-Rather than relying on a queued job or scheduled command to *flip* a
+Rather than relying on a queued job or scheduled command to _flip_ a
 reservation's status the instant it expires, expiry is treated as a
 **derived, lazily-evaluated property**:
 
@@ -134,7 +370,7 @@ constraint, so:
   already claimed that key — we look up its stored response and either
   return it directly (if it finished) or return a 409 (if it's still being
   processed).
-- If the same key is reused with a *different* request body, that's a
+- If the same key is reused with a _different_ request body, that's a
   client error (422), not implicit re-use of the cached response.
 
 This was a genuinely new pattern for me and a good lesson: don't just move
@@ -163,7 +399,7 @@ sessions, or Sanctum. It's intentionally minimal:
 ### 5. Capacity reduction can't invalidate existing reservations
 
 `UpdateCapacityAction` doesn't just blindly update the `capacity` column. If
-the new value is *lower* than the current one, it computes the
+the new value is _lower_ than the current one, it computes the
 **peak concurrent unit usage** across all currently active/future
 reservations (`AvailabilityService::maxConcurrentUnits`, a sweep-line over
 reservation start/end events) and rejects the change if the new capacity
@@ -182,13 +418,13 @@ orphaned history entry.
 
 ## Challenges & How They Were Solved
 
-| Challenge | Solution |
-|---|---|
-| Admin-only capacity control with **no** auth system in place | Lightweight shared-secret middleware in front of just that one endpoint |
-| Preventing overbooking under real concurrent requests | Row-level locking (`lockForUpdate`) inside DB transactions, re-checking capacity right before the write |
-| Idempotent writes without a race in the idempotency check itself | Optimistic `INSERT` + unique constraint, instead of `SELECT`-then-`INSERT` |
-| Expiry correctness surviving server restarts / a stalled scheduler | Expiry is computed lazily from `expires_at` at read time, not flipped by a background process |
-| Testing concurrent behavior | New territory for me — see below |
+| Challenge                                                          | Solution                                                                                                |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Admin-only capacity control with **no** auth system in place       | Lightweight shared-secret middleware in front of just that one endpoint                                 |
+| Preventing overbooking under real concurrent requests              | Row-level locking (`lockForUpdate`) inside DB transactions, re-checking capacity right before the write |
+| Idempotent writes without a race in the idempotency check itself   | Optimistic `INSERT` + unique constraint, instead of `SELECT`-then-`INSERT`                              |
+| Expiry correctness surviving server restarts / a stalled scheduler | Expiry is computed lazily from `expires_at` at read time, not flipped by a background process           |
+| Testing concurrent behavior                                        | New territory for me — see below                                                                        |
 
 Writing **tests for concurrency** was the part I had the least prior
 experience with. Standard feature tests run requests sequentially, so they
