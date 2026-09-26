@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/resources/{resource}/availability', [ReservationController::class, 'availability']);
+Route::get('/reservations/{reservation}/history', [ReservationController::class, 'history']);
 
 Route::middleware('idempotent')->group(function () {
     Route::post('/reservations', [ReservationController::class, 'store']);

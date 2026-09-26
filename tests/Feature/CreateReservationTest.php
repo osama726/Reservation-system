@@ -131,6 +131,28 @@ class CreateReservationTest extends TestCase
         ], ['Idempotency-Key' => 'key-2'])->assertStatus(201);
     }
 
+    public function test_returns_reservation_history_for_a_reservation(): void
+    {
+        $resource = Resource::factory()->create(['capacity' => 10]);
+
+        $response = $this->postJson('/api/reservations', [
+            'resource_id' => $resource->id,
+            'units' => 2,
+            'start_time' => '2030-01-01T10:00:00Z',
+            'end_time' => '2030-01-01T11:00:00Z',
+        ], ['Idempotency-Key' => 'history-endpoint-key']);
+
+        $response->assertStatus(201);
+
+        $reservation = Reservation::query()->firstOrFail();
+
+        $historyResponse = $this->getJson('/api/reservations/'.$reservation->id.'/history');
+
+        $historyResponse->assertStatus(200)
+            ->assertJsonPath('data.0.reservation_id', $reservation->id)
+            ->assertJsonPath('data.0.action', 'created');
+    }
+
     public function test_requires_idempotency_key_header(): void
     {
         $resource = Resource::factory()->create();

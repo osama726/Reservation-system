@@ -12,6 +12,7 @@ use App\Http\Requests\CheckAvailabilityRequest;
 use App\Http\Requests\CreateReservationRequest;
 use App\Http\Requests\UpdateReservationRequest;
 use App\Http\Resources\ReservationResource;
+use App\Models\Reservation;
 use App\Models\Resource;
 use App\Services\AvailabilityService;
 use Carbon\CarbonImmutable;
@@ -66,6 +67,26 @@ class ReservationController extends Controller
             'available_units' => max(0, $resource->capacity - $booked),
             'start_time' => $start->toIso8601String(),
             'end_time' => $end->toIso8601String(),
+        ]);
+    }
+
+    public function history(string $reservation): JsonResponse
+    {
+        $reservation = Reservation::query()->with('history')->findOrFail($reservation);
+
+        return response()->json([
+            'data' => $reservation->history
+                ->sortBy('created_at')
+                ->values()
+                ->map(fn ($entry) => [
+                    'id' => $entry->id,
+                    'reservation_id' => $entry->reservation_id,
+                    'action' => $entry->action,
+                    'old_data' => $entry->old_data,
+                    'new_data' => $entry->new_data,
+                    'created_at' => $entry->created_at?->toIso8601String(),
+                ])
+                ->all(),
         ]);
     }
 }
