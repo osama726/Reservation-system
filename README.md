@@ -74,7 +74,9 @@ Schedule::command('reservations:expire')->everyMinute();
 
 For a ready-to-use API collection with sample requests and responses, use the Postman workspace here:
 
-https://app.getpostman.com/join-team?invite_code=69ed1fee6d60d55a8deca8c49a16a211b25debb9a54feca7bfb62b5bda74b2e9&target_code=bce7e483dc15a1672c27f0ed944d11e6
+<a href="https://app.getpostman.com/join-team?invite_code=69ed1fee6d60d55a8deca8c49a16a211b25debb9a54feca7bfb62b5bda74b2e9&target_code=bce7e483dc15a1672c27f0ed944d11e6" target="_blank" rel="noopener noreferrer">
+      Pstman link — Check My Api Collection in postman
+</a> 
 
 ### Common conventions
 
