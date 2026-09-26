@@ -1,0 +1,142 @@
+:root {
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --primary: #2563eb;
+    --success: #15803d;
+    --danger: #b91c1c;
+    --border: #dbe3ef;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px;
+}
+
+.demo-banner {
+    max-width: 1100px;
+    margin: 24px auto 18px;
+    background: linear-gradient(135deg, #e0ecff, #f8fbff);
+    border: 1px solid #cfe0ff;
+    border-radius: 14px;
+    padding: 16px 20px;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+}
+
+.demo-banner p {
+    margin: 10px 0 0;
+    color: #1e3a8a;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.demo-badge {
+    display: inline-block;
+    background: #2563eb;
+    color: white;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+h1 {
+    margin-bottom: 8px;
+    font-size: 32px;
+}
+
+.subtitle {
+    margin: 0 0 24px;
+    color: var(--muted);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+}
+
+.card h2 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 22px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+input,
+button {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+}
+
+input {
+    margin-bottom: 14px;
+    background: #fff;
+}
+
+button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+button.secondary {
+    background: #0f172a;
+}
+
+button.danger {
+    background: var(--danger);
+}
+
+.output {
+    margin-top: 24px;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    min-height: 100px;
+}
+
+.small {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+}

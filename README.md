@@ -68,6 +68,31 @@ Schedule::command('reservations:expire')->everyMinute();
 
 ---
 
+## Simple Demo Frontend
+
+This project includes a lightweight Blade page to help you test the reservation flow quickly without needing a separate frontend app.
+
+- Route: `/demo`
+- Purpose: fast validation and API flow testing
+- Scope: create, availability check, update, confirm, cancel, history, and admin capacity update
+- Important: this is a simple demo interface for development and verification, not a full production UI
+
+Open this in the browser after starting the app:
+
+```bash
+php artisan serve
+```
+
+Then visit:
+
+```text
+http://127.0.0.1:8000/demo
+```
+
+This page is intentionally minimal and focused on clarity. It shows the exact API workflow in a compact way so developers can test the backend logic quickly and understand what each request does.
+
+---
+
 ## API Endpoints
 
 ### Postman collection
@@ -76,7 +101,7 @@ For a ready-to-use API collection with sample requests and responses, use the Po
 
 <a href="https://app.getpostman.com/join-team?invite_code=69ed1fee6d60d55a8deca8c49a16a211b25debb9a54feca7bfb62b5bda74b2e9&target_code=bce7e483dc15a1672c27f0ed944d11e6" target="_blank" rel="noopener noreferrer">
       Pstman link — Check My Api Collection in postman
-</a> 
+</a>
 
 ### Common conventions
 
