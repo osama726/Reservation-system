@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Reservation;
 use App\Models\Resource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -29,6 +30,52 @@ class CreateReservationTest extends TestCase
             'resource_id' => $resource->id,
             'units' => 6,
             'status' => 'pending',
+        ]);
+    }
+
+    public function test_tracks_every_reservation_change_in_history(): void
+    {
+        $resource = Resource::factory()->create(['capacity' => 10]);
+
+        $createResponse = $this->postJson('/api/reservations', [
+            'resource_id' => $resource->id,
+            'units' => 2,
+            'start_time' => '2030-01-01T10:00:00Z',
+            'end_time' => '2030-01-01T11:00:00Z',
+        ], ['Idempotency-Key' => 'history-key-create']);
+
+        $createResponse->assertStatus(201);
+
+        $reservation = Reservation::query()->firstOrFail();
+
+        $this->assertDatabaseHas('reservation_histories', [
+            'reservation_id' => $reservation->id,
+            'action' => 'created',
+        ]);
+
+        $this->putJson('/api/reservations/'.$reservation->id, [
+            'units' => 3,
+            'start_time' => '2030-01-01T10:00:00Z',
+            'end_time' => '2030-01-01T12:00:00Z',
+        ], ['Idempotency-Key' => 'history-key-update'])->assertStatus(200);
+
+        $this->assertDatabaseHas('reservation_histories', [
+            'reservation_id' => $reservation->id,
+            'action' => 'updated',
+        ]);
+
+        $this->postJson('/api/reservations/'.$reservation->id.'/confirm', [], ['Idempotency-Key' => 'history-key-confirm'])->assertStatus(200);
+
+        $this->assertDatabaseHas('reservation_histories', [
+            'reservation_id' => $reservation->id,
+            'action' => 'confirmed',
+        ]);
+
+        $this->postJson('/api/reservations/'.$reservation->id.'/cancel', [], ['Idempotency-Key' => 'history-key-cancel'])->assertStatus(200);
+
+        $this->assertDatabaseHas('reservation_histories', [
+            'reservation_id' => $reservation->id,
+            'action' => 'cancelled',
         ]);
     }
 
